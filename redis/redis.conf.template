@@ -1,0 +1,12 @@
+# Allow connections from all IP addresses by binding to all network interfaces
+bind 0.0.0.0
+
+# Set Redis port
+port ${REDIS_PORT}
+
+# Authentication settings
+requirepass ${REDIS_PASSWORD}
+
+# By default, protected mode is enabled which only allows connections from localhost
+# We disable it as we're using password authentication instead
+protected-mode no

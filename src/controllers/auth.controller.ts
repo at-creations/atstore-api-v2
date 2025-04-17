@@ -176,7 +176,7 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const userObj = user.toObject();
-  const { password: _, __v: __, ...userResponse } = userObj;
+  const { password: _, __v: __, apiKeys, ...userResponse } = userObj;
 
   res
     .status(200)

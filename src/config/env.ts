@@ -77,10 +77,8 @@ export const config = {
   // Store name
   STORE_NAME: process.env.STORE_NAME || "AT Creations",
 
-  // Hetzner API
-  HETZNER_API_URL: process.env.HETZNER_API_URL || "https://api.hetzner.cloud/v1",
-  HETZNER_API_KEY: process.env.HETZNER_API_KEY,
-  HETZNER_SERVER_ID: process.env.HETZNER_SERVER_ID,
+  // App API Secret
+  APP_API_SECRET: process.env.APP_API_SECRET as string,
 };
 
 export default config;

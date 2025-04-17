@@ -3,6 +3,7 @@ import { UnauthorizedError, ForbiddenError } from "./error.middleware";
 import { TokenService } from "../services/token.service";
 import { IUserDocument, User } from "../models/user.model";
 import { DbService } from "../services/db.service";
+import { ApiKeyService } from "../services/apikey.service";
 
 declare global {
   namespace Express {
@@ -16,20 +17,37 @@ declare global {
 /**
  * Authentication middleware
  * Uses global error handling pattern for consistency
+ * Supports both cookie-based authentication and API key authentication
  */
 export const authenticate = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // Get token from cookies
-  const accessToken = req.signedCookies["accessToken"];
-
-  if (!accessToken) {
-    return next(new UnauthorizedError("Authentication required"));
-  }
-
   try {
+    // First check for API Key in header
+    const apiKey = req.headers["x-api-key"] as string;
+
+    if (apiKey) {
+      // Try to authenticate with API key using the ApiKeyService
+      // This handles decryption and validation of the API key
+      const user = await ApiKeyService.validateApiKey(apiKey);
+
+      // If user found with valid API key
+      if (user) {
+        // Set user on request object
+        req.user = user;
+        return next();
+      }
+    }
+
+    // If API key authentication failed, try cookie authentication
+    const accessToken = req.signedCookies["accessToken"];
+
+    if (!accessToken) {
+      return next(new UnauthorizedError("Authentication required"));
+    }
+
     // Verify token
     const payload = TokenService.verifyAccessToken(accessToken);
 

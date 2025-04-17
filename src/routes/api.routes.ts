@@ -9,6 +9,7 @@ import healthRoutes from "./health.routes";
 import orderRoutes from "./order.routes";
 import verifyRoutes from "./verify.routes";
 import storeInfoRoutes from "./storeInfo.routes";
+import { apiKeyRoutes } from "./apikey.routes";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/media", mediaRoutes);
 router.use("/health", healthRoutes);
 router.use("/order", orderRoutes);
 router.use("/store-info", storeInfoRoutes);
+router.use("/apikeys", apiKeyRoutes);
 
 export default router;

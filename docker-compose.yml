@@ -1,0 +1,76 @@
+services:
+  atstore-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: atstore-api
+    container_name: atstore-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5050}:${PORT:-5050}"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./db-key.pem:/app/db-key.pem:ro
+      - ./.env:/app/.env:ro
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT:-5050}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "http://localhost:${PORT:-5050}/api/v2/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - redis
+    networks:
+      - atstore-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: atstore-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    restart: unless-stopped
+    networks:
+      - atstore-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "-a",
+          "${REDIS_PASSWORD:-redis_secure_password}",
+          "ping",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password}
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+volumes:
+  redis_data:
+
+networks:
+  atstore-network:
+    driver: bridge

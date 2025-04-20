@@ -23,24 +23,44 @@ class StoreInfoService {
 
   /**
    * Update store information (admin only)
-   * @param storeInfoData Updated store information
+   * @param storeInfoData Updated store information - can contain partial fields
+   * @param fieldsToRemove Array of field names to remove from the document
    * @returns Updated store info
    */
-  async updateStoreInfo(storeInfoData: IStoreInfo): Promise<IStoreInfo> {
+  async updateStoreInfo(
+    storeInfoData: Partial<IStoreInfo>,
+    fieldsToRemove: string[] = []
+  ): Promise<IStoreInfo> {
     return await DbService.executeDbOperation(async () => {
       const storeInfo = await StoreInfo.findOne();
 
       if (storeInfo) {
-        // Update existing document
-        Object.assign(storeInfo, storeInfoData);
+        // Update fields with provided values
+        Object.keys(storeInfoData).forEach((key) => {
+          if (storeInfoData[key as keyof IStoreInfo] !== undefined) {
+            const typedKey = key as keyof IStoreInfo;
+            (storeInfo[typedKey] as any) = storeInfoData[typedKey];
+          }
+        });
+
+        // Remove fields marked for removal
+        fieldsToRemove.forEach((field) => {
+          if (field in storeInfo) {
+            // Use MongoDB $unset for proper field removal
+            storeInfo.set(field, undefined);
+          }
+        });
+
         await storeInfo.save();
-        const { __v, _id, createdAt, ...updatedStoreInfo } = storeInfo.toObject();
+        const { __v, _id, createdAt, ...updatedStoreInfo } =
+          storeInfo.toObject();
         return updatedStoreInfo;
       } else {
         // Create new document if it doesn't exist
         const newStoreInfo = new StoreInfo(storeInfoData);
         await newStoreInfo.save();
-        const { __v, _id, createdAt, ...createdStoreInfo } = newStoreInfo.toObject();
+        const { __v, _id, createdAt, ...createdStoreInfo } =
+          newStoreInfo.toObject();
         return createdStoreInfo;
       }
     });

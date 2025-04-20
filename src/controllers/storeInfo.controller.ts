@@ -57,14 +57,54 @@ export class StoreInfoController {
    */
   updateStoreInfo = asyncHandler(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      // Only include defined fields from the request body
+      const updateData: any = {};
+      const fieldsToRemove: string[] = [];
       const { email, phone, address, businessHours } = req.body;
 
-      const updatedStoreInfo = await storeInfoService.updateStoreInfo({
-        email,
-        phone,
-        address,
-        businessHours,
-      });
+      // Check if fields should be updated or removed
+      if (email !== undefined) {
+        if (typeof email === "string" && email.toLowerCase() === "_removed_") {
+          fieldsToRemove.push("email");
+        } else {
+          updateData.email = email;
+        }
+      }
+
+      if (phone !== undefined) {
+        if (typeof phone === "string" && phone.toLowerCase() === "_removed_") {
+          fieldsToRemove.push("phone");
+        } else {
+          updateData.phone = phone;
+        }
+      }
+
+      if (address !== undefined) {
+        if (
+          typeof address === "string" &&
+          address.toLowerCase() === "_removed_"
+        ) {
+          fieldsToRemove.push("address");
+        } else {
+          updateData.address = address;
+        }
+      }
+
+      if (businessHours !== undefined) {
+        if (
+          typeof businessHours === "string" &&
+          businessHours.toLowerCase() === "_removed_"
+        ) {
+          fieldsToRemove.push("businessHours");
+        } else {
+          updateData.businessHours = businessHours;
+        }
+      }
+
+      const updatedStoreInfo = await storeInfoService.updateStoreInfo(
+        updateData,
+        fieldsToRemove
+      );
 
       // Invalidate store info cache after update
       await cacheRedisUtils.del(`${REDIS_CACHE_KEYS.STORE.INFO}general`);

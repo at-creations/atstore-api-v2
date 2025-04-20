@@ -7,10 +7,10 @@ export interface BusinessHours {
 }
 
 export interface IStoreInfo {
-  email: string;
-  phone: string;
-  address: string;
-  businessHours: BusinessHours[];
+  email?: string;
+  phone?: string;
+  address?: string;
+  businessHours?: BusinessHours[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -64,7 +64,7 @@ const storeInfoSchema = new Schema<IStoreInfoDocument>(
   {
     email: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
       lowercase: true,
       match: [
@@ -74,19 +74,20 @@ const storeInfoSchema = new Schema<IStoreInfoDocument>(
     },
     phone: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     address: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     businessHours: {
       type: [businessHoursSchema],
-      required: true,
+      required: false,
       validate: {
         validator: function (hours: BusinessHours[]) {
+          if (!hours || hours.length === 0) return true;
           // Check for duplicate days
           const days = hours.map((h) => h.day);
           return new Set(days).size === days.length;

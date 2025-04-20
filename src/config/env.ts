@@ -30,7 +30,7 @@ export const config = {
     process.env.REDIS_MAXMEMORY_POLICY || "allkeys-lru",
 
   // Rate Limiter
-  RATE_LIMIT_POINTS: parseInt(process.env.RATE_LIMIT_POINTS || "60", 10),
+  RATE_LIMIT_POINTS: parseInt(process.env.RATE_LIMIT_POINTS || "120", 10),
   RATE_LIMIT_DURATION: parseInt(process.env.RATE_LIMIT_DURATION || "60", 10),
   TRUSTED_PROXIES: process.env.TRUSTED_PROXIES === "true",
 

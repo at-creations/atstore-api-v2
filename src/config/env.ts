@@ -79,6 +79,9 @@ export const config = {
 
   // App API Secret
   APP_API_SECRET: process.env.APP_API_SECRET as string,
+
+  // Gemini API Key
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY as string,
 };
 
 export default config;

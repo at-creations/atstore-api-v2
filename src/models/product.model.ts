@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { normalizeVietnamese } from "../utils/text.utils";
+import { EmbeddingService } from "../services/embedding.service";
 
 export interface IProduct {
   name: string;
@@ -18,6 +19,7 @@ export interface IProduct {
   stock: number;
   createdAt: Date;
   updatedAt: Date;
+  embedding?: number[];
 }
 
 export interface IProductDocument extends IProduct, Document {
@@ -89,13 +91,38 @@ const productSchema = new Schema<IProductDocument>(
       required: true,
       default: 1,
     },
+    embedding: {
+      type: [Number],
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
-productSchema.pre("save", function (next) {
+productSchema.pre("save", async function (next) {
   this.normalizedNameVI = normalizeVietnamese(this.nameVI);
   this.normalizedDescriptionVI = normalizeVietnamese(this.descriptionVI);
+
+  // Generate embeddings for the product
+  try {
+    // Only include product's own text fields for embedding
+    const textsToEmbed = [
+      this.name,
+      this.nameVI,
+      this.description,
+      this.descriptionVI,
+    ].filter((text) => text && text.trim().length > 0); // Filter out empty texts
+
+    // Only generate embedding if we have texts to embed
+    if (textsToEmbed.length > 0) {
+      // Pass the array directly to the embedding service without joining
+      this.embedding = await EmbeddingService.getEmbedding(textsToEmbed);
+    }
+  } catch (error) {
+    console.error("Error generating product embedding:", error);
+    // Continue saving even if embedding fails
+  }
+
   next();
 });
 

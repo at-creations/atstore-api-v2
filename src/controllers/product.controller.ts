@@ -2,7 +2,9 @@ import { Request, Response } from "express";
 import { successResponse, paginatedResponse } from "../models/response.model";
 import { asyncHandler } from "../utils/async-handler.util";
 import { BadRequestError } from "../middleware/error.middleware";
-import { ProductService } from "../services/product.service";
+import {
+  ProductService,
+} from "../services/product.service";
 import {
   cacheRedisUtils,
   REDIS_CACHE_KEYS,
@@ -80,9 +82,7 @@ export const incrementProductViews = asyncHandler(
     // Invalidate cached product since view count changed
     await cacheRedisUtils.del(`${REDIS_CACHE_KEYS.PRD.DET}${id}`);
 
-    return res
-      .status(200)
-      .json(successResponse("View count updated"));
+    return res.status(200).json(successResponse("View count updated"));
   }
 );
 

@@ -5,6 +5,14 @@ import { BadRequestError, NotFoundError } from "../middleware/error.middleware";
 import { DbService } from "./db.service";
 import { CategoryService } from "./category.service";
 
+export interface SimplifiedCategory {
+  _id: string;
+  name: string;
+  nameVI: string;
+  slug: string;
+  thumbnail: string;
+}
+
 export class ProductService {
   /**
    * Create a new product
@@ -68,7 +76,13 @@ export class ProductService {
       // Create and save product
       const product = new Product(productData);
       await product.save();
-      return product;
+      return product.toObject({
+        transform: (doc, ret) => {
+          delete ret.__v;
+          delete ret.embedding;
+          return ret;
+        },
+      });
     });
   }
 
@@ -83,7 +97,9 @@ export class ProductService {
     }
 
     return await DbService.executeDbOperation(async () => {
-      const product = await Product.findById(id).select("-__v").lean();
+      const product = await Product.findById(id)
+        .select("-__v -embedding")
+        .lean();
 
       if (!product) {
         throw new NotFoundError("Product not found");
@@ -105,7 +121,7 @@ export class ProductService {
 
       return {
         ...product,
-        categories: productCategories,
+        categories: productCategories as SimplifiedCategory[],
       };
     });
   }
@@ -339,7 +355,7 @@ export class ProductService {
     return await DbService.executeDbOperation(async () => {
       const [products, totalCount] = await Promise.all([
         Product.find(filter)
-          .select("-__v")
+          .select("-__v -embedding")
           .sort(sortOptions)
           .skip(skip)
           .limit(pageSize)
@@ -450,7 +466,7 @@ export class ProductService {
         new: true,
         runValidators: true,
       })
-        .select("-__v")
+        .select("-__v -embedding")
         .lean();
 
       if (!updatedProduct) {
@@ -594,7 +610,14 @@ export class ProductService {
       const productPromises = productsData.map(async (productData) => {
         const product = new Product(productData);
         await product.save();
-        return product;
+        // Return a lean object without __v and embedding fields
+        return product.toObject({
+          transform: (doc, ret) => {
+            delete ret.__v;
+            delete ret.embedding;
+            return ret;
+          },
+        });
       });
 
       // Execute all product creation operations in parallel
@@ -611,7 +634,7 @@ export class ProductService {
   public static async getFeaturedProducts(limit: number = 8): Promise<any[]> {
     return await DbService.executeDbOperation(async () => {
       const products = await Product.find({ featured: true })
-        .select("-__v")
+        .select("-__v -embedding")
         .sort({ views: -1 })
         .limit(limit)
         .lean();
@@ -666,7 +689,7 @@ export class ProductService {
   public static async getMostViewedProducts(limit: number = 8): Promise<any[]> {
     return await DbService.executeDbOperation(async () => {
       const products = await Product.find({ stock: { $gt: 0 } })
-        .select("-__v")
+        .select("-__v -embedding")
         .sort({ views: -1 })
         .limit(limit)
         .lean();
@@ -721,7 +744,7 @@ export class ProductService {
   public static async getTrendingProducts(limit: number = 8): Promise<any[]> {
     return await DbService.executeDbOperation(async () => {
       const products = await Product.find({ stock: { $gt: 0 } })
-        .select("-__v")
+        .select("-__v -embedding")
         .sort({ recentViews: -1, views: -1 })
         .limit(limit)
         .lean();
@@ -786,7 +809,7 @@ export class ProductService {
         // Get all products with pagination
         const [products, totalCount] = await Promise.all([
           Product.find({})
-            .select("-__v")
+            .select("-__v -embedding")
             .sort({ featured: -1, recentViews: -1, views: -1, createdAt: -1 })
             .limit(limit)
             .skip((page - 1) * limit)
@@ -951,7 +974,7 @@ export class ProductService {
         { $inc: { stock: quantity } },
         { new: true, runValidators: true }
       )
-        .select("-__v")
+        .select("-__v -embedding")
         .lean();
 
       if (!updatedProduct) {

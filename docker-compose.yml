@@ -58,6 +58,7 @@ services:
         [
           "CMD",
           "redis-cli",
+          "-p", "${REDIS_PORT:-6379}",
           "-a",
           "${REDIS_PASSWORD:-redis_secure_password}",
           "ping",

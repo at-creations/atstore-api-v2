@@ -1,0 +1,49 @@
+name: Deploy to server
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H server-1.atcreations.ca >> ~/.ssh/known_hosts
+
+      - name: Create destination directory
+        run: ssh deploy@server-1.atcreations.ca "mkdir -p /home/deploy/atstore-server-v2/"
+
+      - name: Copy files to server
+        run: rsync -avz --delete --exclude '.git*' ./ deploy@server-1.atcreations.ca:/home/deploy/atstore-server-v2/
+
+      - name: Copy environment file
+        run: |
+          ssh deploy@server-1.atcreations.ca <<EOF
+          cp /home/deploy/env/atstore-server-v2.env /home/deploy/atstore-server-v2/.env
+          cp /home/deploy/env/${{ secrets.DB_CERT_FILE }} /home/deploy/atstore-server-v2/${{ secrets.DB_CERT_FILE }}
+          EOF
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh deploy@server-1.atcreations.ca <<EOF
+          cd /home/deploy/atstore-server-v2/
+          docker compose up -d --build
+          EOF

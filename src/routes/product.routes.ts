@@ -33,8 +33,10 @@ router.get("/search", cacheBypass, searchProducts);
 router.get("/id/:id", cacheBypass, getProductById);
 router.post("/views/:id", incrementProductViews); // Track product views
 
-// Protected routes - require authentication
-router.use(authenticate);
+// Protected routes - require authentication (explicitly allowing API key auth)
+router.use((req, res, next) =>
+  authenticate(req, res, next, { allowApiKey: true })
+);
 
 router.get("/ids", authorize(["admin"]), cacheBypass, getAllProductIds);
 router.post("/", authorize(["admin", "manager", "staff"]), createProduct);

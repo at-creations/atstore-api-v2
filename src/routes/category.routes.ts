@@ -19,8 +19,10 @@ const router = Router();
 router.get("/:idOrSlug", cacheBypass, getCategoryByIdOrSlug);
 router.get("/", cacheBypass, searchCategories);
 
-// Protected routes - require authentication
-router.use(authenticate);
+// Protected routes - require authentication (explicitly allowing API key auth)
+router.use((req, res, next) =>
+  authenticate(req, res, next, { allowApiKey: true })
+);
 
 // Admin/manager only routes
 router.post("/", authorize(["admin", "manager"]), createCategory);

@@ -16,8 +16,10 @@ import {
 
 const router = Router();
 
-// Protected routes - require authentication
-router.use(authenticate);
+// Protected routes - require authentication (explicitly allowing API key auth)
+router.use((req, res, next) =>
+  authenticate(req, res, next, { allowApiKey: true })
+);
 
 // Product media routes - admin, manager, and staff access only
 const staffRoles = ["admin", "manager", "staff"];

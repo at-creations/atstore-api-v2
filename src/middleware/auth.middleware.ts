@@ -18,17 +18,20 @@ declare global {
  * Authentication middleware
  * Uses global error handling pattern for consistency
  * Supports both cookie-based authentication and API key authentication
+ * @param options Configuration options for authentication
+ * @param options.allowApiKey Whether to allow API key authentication (defaults to false)
  */
 export const authenticate = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
+  options: { allowApiKey?: boolean } = { allowApiKey: false }
 ): Promise<void> => {
   try {
-    // First check for API Key in header
+    // First check for API Key in header if API key authentication is allowed
     const apiKey = req.headers["x-api-key"] as string;
 
-    if (apiKey) {
+    if (options.allowApiKey && apiKey) {
       // Try to authenticate with API key using the ApiKeyService
       // This handles decryption and validation of the API key
       const user = await ApiKeyService.validateApiKey(apiKey);
@@ -41,7 +44,7 @@ export const authenticate = async (
       }
     }
 
-    // If API key authentication failed, try cookie authentication
+    // If API key authentication failed or is not allowed, try cookie authentication
     const accessToken = req.signedCookies["accessToken"];
 
     if (!accessToken) {
